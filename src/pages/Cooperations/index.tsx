@@ -20,15 +20,18 @@ import {
 import { useEffect, useMemo, useState } from 'react';
 import {
   COOP_PAY_PROGRESS_LABEL,
-  coopPayProgress,
+  indexCooperationPayments,
   type CoopPayProgress,
 } from '@/domains/product/coopPayProgress';
+import { buildCampaignRecordList } from '@/domains/product/campaignRecordList';
 import { ROLE_CURRENT_USER } from '@/domains/product/mockTypes';
 import type { CoopLine, PrototypeCooperation } from '@/domains/product/mockTypes';
-import { addCooperation, paymentRemain, useMockStore } from '@/domains/product/mockStore';
+import { addCooperation, useMockStore } from '@/domains/product/mockStore';
 import {
   campaignsForRole,
+  canCreateCooperation,
   canExecCampaign,
+  cooperationsForPaymentApplication,
   cooperationsForRole,
 } from '@/domains/product/permissions';
 import { canRoleSeeModule, getPrototypeRole } from '@/domains/product/prototypeNavigation';
@@ -89,43 +92,19 @@ export default function CooperationsPage() {
     [campaigns, cooperations, payments, role],
   );
 
-  const rows: CoopRow[] = useMemo(
-    () =>
-      list.map((c) => {
-        const camp = campaigns.find((x) => x.id === c.campaignId);
-        return {
-          ...c,
-          campaignName: camp?.name || c.campaignId,
-          brand: camp?.clientBrand || '',
-          payProgress: coopPayProgress(c, payments),
-          remain: paymentRemain(c, payments),
-        };
-      }),
-    [list, campaigns, payments],
+  const paymentSummary = useMemo(() => indexCooperationPayments(payments), [payments]);
+  const payableCoopIds = useMemo(
+    () => new Set(cooperationsForPaymentApplication(cooperations, campaigns, role).map((c) => c.id)),
+    [cooperations, campaigns, role],
   );
-
-  const brandOptions = useMemo(() => {
-    const set = new Set(rows.map((r) => r.brand).filter(Boolean));
-    return Array.from(set).map((b) => ({ value: b, label: b }));
-  }, [rows]);
-
-  const operatorOptions = useMemo(() => {
-    const set = new Set(rows.map((r) => r.operator).filter(Boolean));
-    return Array.from(set).map((o) => ({ value: o, label: o }));
-  }, [rows]);
-
-  const creatorOptions = useMemo(() => {
-    const map = new Map<string, string>();
-    rows.forEach((r) => map.set(r.creatorId, r.creatorName));
-    return Array.from(map.entries()).map(([value, label]) => ({ value, label }));
-  }, [rows]);
-
-  const campaignFilterOptions = useMemo(() => {
-    const ids = new Set(rows.map((r) => r.campaignId));
-    return campaigns
-      .filter((c) => ids.has(c.id))
-      .map((c) => ({ value: c.id, label: c.name }));
-  }, [rows, campaigns]);
+  const { rows: campaignRows, campaignOptions, brandOptions, operatorOptions, creatorOptions } = useMemo(
+    () => buildCampaignRecordList(list, campaigns),
+    [list, campaigns],
+  );
+  const rows: CoopRow[] = useMemo(
+    () => campaignRows.map((coop) => ({ ...coop, ...paymentSummary(coop) })),
+    [campaignRows, paymentSummary],
+  );
 
   const filteredRows = useMemo(() => {
     const kw = filters.keyword.trim().toLowerCase();
@@ -144,17 +123,12 @@ export default function CooperationsPage() {
     });
   }, [rows, filters]);
 
-  const canCreate =
-    role === 'operator' ||
-    role === 'owner' ||
-    role === 'business' ||
-    role === 'executive' ||
-    role === 'architecture';
+  const canCreate = canCreateCooperation(role);
 
   const onSubmit = async () => {
     const v = await form.validateFields();
-    const camp = campaigns.find((c) => c.id === v.campaignId);
-    if (!camp || !canExecCampaign(role, camp)) {
+    const camp = visibleCampaigns.find((c) => c.id === v.campaignId);
+    if (!canCreate || !camp || !canExecCampaign(role, camp)) {
       message.error('无权在该 Campaign 下建合作，或项目未发布');
       return;
     }
@@ -215,7 +189,7 @@ export default function CooperationsPage() {
           style={{ width: 200 }}
           value={filters.campaignId}
           onChange={(v) => setFilters((f) => ({ ...f, campaignId: v }))}
-          options={[{ value: 'all', label: '全部项目' }, ...campaignFilterOptions]}
+          options={[{ value: 'all', label: '全部项目' }, ...campaignOptions]}
         />
         {showMoney && (
           <Select
@@ -333,7 +307,7 @@ export default function CooperationsPage() {
             render: (_, r) =>
               r.payProgress === 'settled' ? (
                 <Text type="secondary">已结清</Text>
-              ) : (
+              ) : payableCoopIds.has(r.id) ? (
                 <Button
                   type="link"
                   style={{ padding: 0 }}
@@ -341,7 +315,7 @@ export default function CooperationsPage() {
                 >
                   申请付款
                 </Button>
-              ),
+              ) : null,
           },
         ]}
       />

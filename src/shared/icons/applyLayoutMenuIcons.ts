@@ -5,7 +5,6 @@ import {
   normalizePath,
   type MenuPathNode,
 } from './menuIcons';
-import { isProductPrototypePath } from '@/domains/product/prototypeNavigation';
 import { renderMenuIcon } from './renderMenuIcon';
 
 type LayoutMenu = {
@@ -17,8 +16,12 @@ type LayoutMenu = {
 
 const ALWAYS_SHOW = new Set(['/home']);
 
-/** 侧栏只展示后端仍有效的菜单（停用的目录/页面不再出现）。首页始终保留。 */
-export function filterLayoutMenusByBackend(menuData: LayoutMenu[], backendMenus: MenuPathNode[] = []) {
+/** 保留后端有效菜单、首页，以及调用方指定的前端菜单。 */
+export function filterLayoutMenusByBackend(
+  menuData: LayoutMenu[],
+  backendMenus: MenuPathNode[] = [],
+  keepFrontendPath?: (path: string) => boolean,
+) {
   const allowed = collectMenuPaths(backendMenus);
   const walk = (items: LayoutMenu[]): LayoutMenu[] =>
     items.flatMap((item) => {
@@ -27,7 +30,7 @@ export function filterLayoutMenusByBackend(menuData: LayoutMenu[], backendMenus:
         return [{ ...item, children }];
       }
       const path = normalizePath(item.path || '');
-      if (ALWAYS_SHOW.has(path) || isProductPrototypePath(path) || allowed.has(path)) {
+      if (ALWAYS_SHOW.has(path) || allowed.has(path) || keepFrontendPath?.(path)) {
         return [{ ...item, children }];
       }
       return [];
@@ -36,8 +39,12 @@ export function filterLayoutMenusByBackend(menuData: LayoutMenu[], backendMenus:
 }
 
 /** 先按后端有效菜单过滤，再贴图标。 */
-export function applyLayoutMenuIcons(menuData: LayoutMenu[], backendMenus: MenuPathNode[] = []) {
-  const visible = filterLayoutMenusByBackend(menuData, backendMenus);
+export function applyLayoutMenuIcons(
+  menuData: LayoutMenu[],
+  backendMenus: MenuPathNode[] = [],
+  keepFrontendPath?: (path: string) => boolean,
+) {
+  const visible = filterLayoutMenusByBackend(menuData, backendMenus, keepFrontendPath);
   const backend = collectIconByPath(backendMenus);
   const walk = (items: LayoutMenu[]): LayoutMenu[] =>
     items.map((item) => ({

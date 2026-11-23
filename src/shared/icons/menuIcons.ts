@@ -1,4 +1,3 @@
-import type { ComponentType } from 'react';
 import {
   ApartmentOutlined,
   AppstoreOutlined,
@@ -56,7 +55,7 @@ export type MenuIconItem = {
   name: string;
   label: string;
   aliases: string[];
-  Icon: ComponentType;
+  Icon: typeof HomeOutlined;
 };
 
 /** 侧栏/菜单管理用的图标目录（Outlined，风格统一）。 */

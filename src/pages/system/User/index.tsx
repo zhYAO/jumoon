@@ -23,8 +23,8 @@ export default function SystemUserPage() {
   const [editing, setEditing] = useState<SysUser | null>(null);
   const { loading, run } = useAsyncAction();
 
-  const request = useProTableRequest<SysUser>(
-    (query) => userService.page(query),
+  const request = useProTableRequest(
+    userService.page,
     {
       mapParams: (params) => ({
         email: params.email as string | undefined,

@@ -26,8 +26,8 @@ export default function SystemRolePage() {
   const [editing, setEditing] = useState<SysRole | null>(null);
   const { loading, run } = useAsyncAction();
 
-  const request = useProTableRequest<SysRole>(
-    (query) => roleService.page(query),
+  const request = useProTableRequest(
+    roleService.page,
     {
       mapParams: (params) => ({
         name: params.name as string | undefined,

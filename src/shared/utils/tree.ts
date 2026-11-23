@@ -22,14 +22,19 @@ export function listToTree<T extends { id: number; parentId?: number }>(
   return roots;
 }
 
+type NodeWithPath<T> = Omit<T, 'children'> & {
+  pathName: string;
+  children?: NodeWithPath<T>[];
+};
+
 /** 给树节点补 pathName，选中后显示「上级 / 本级」，下拉仍用 name。 */
 export function withPathName<T extends { name: string; children?: T[] }>(
   nodes: T[],
   prefix: string[] = [],
-): (T & { pathName: string; children?: (T & { pathName: string })[] })[] {
+): NodeWithPath<T>[] {
   return nodes.map((node) => {
     const path = [...prefix, node.name];
-    const children = node.children?.length ? withPathName(node.children, path) : node.children;
+    const children = node.children && withPathName(node.children, path);
     return { ...node, pathName: path.join(' / '), children };
   });
 }

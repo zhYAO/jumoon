@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react';
+import { indexCooperationPayments } from './coopPayProgress';
 import { campaignHasFinance, INITIAL_MOCK_STATE, nextId } from './mockSeed';
 import type {
   MockState,
@@ -128,13 +129,7 @@ export function updatePaymentStatus(id: string, status: PaymentStatus) {
 }
 
 export function paymentRemain(coop: PrototypeCooperation, payments: PrototypePayment[]) {
-  const used = payments
-    .filter(
-      (p) =>
-        p.cooperationId === coop.id && ['pending', 'approved', 'paid'].includes(p.status),
-    )
-    .reduce((s, p) => s + p.amount, 0);
-  return Math.max(0, coop.creatorTotal - used);
+  return indexCooperationPayments(payments)(coop).remain;
 }
 
 export function campaignFinanceFlag(campaignId: string) {

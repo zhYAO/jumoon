@@ -2,10 +2,7 @@ import { PageContainer } from '@ant-design/pro-components';
 import { history, useLocation } from '@umijs/max';
 import {
   Button,
-  Drawer,
-  Form,
   Input,
-  InputNumber,
   Segmented,
   Select,
   Space,
@@ -14,62 +11,30 @@ import {
   Typography,
   message,
 } from 'antd';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { buildCampaignRecordList, textOptions } from '@/domains/product/campaignRecordList';
 import { ROLE_CURRENT_USER } from '@/domains/product/mockTypes';
 import type { PaymentStatus, PaymentType, PrototypePayment } from '@/domains/product/mockTypes';
 import {
-  addPayment,
-  paymentRemain,
   updatePaymentStatus,
   useMockStore,
 } from '@/domains/product/mockStore';
 import {
+  canApplyPayment,
   canReviewPayment,
   canSeePayoutAccount,
   maskAccount,
   paymentsForRole,
 } from '@/domains/product/permissions';
-import { getPrototypeRole, canRoleSeeModule } from '@/domains/product/prototypeNavigation';
+import { getPrototypeRole, canRoleSeeModule, defaultFinancePathForRole } from '@/domains/product/prototypeNavigation';
+import { PaymentApplicationDrawer } from './PaymentApplicationDrawer';
+import { pageKind, PAYMENT_TYPE_OPTIONS, PAYMENT_VIEWS, STATUS_TAG, TYPE_LABEL, type PaymentStatusFilter } from './paymentViews';
 import styles from './index.less';
 
 const { Text } = Typography;
 
-const STATUS_TAG: Record<PaymentStatus, { color: string; text: string }> = {
-  pending: { color: 'orange', text: '待审核' },
-  approved: { color: 'blue', text: '审核通过' },
-  paid: { color: 'success', text: '已付款' },
-  rejected: { color: 'error', text: '驳回' },
-  need_info: { color: 'gold', text: '信息补充' },
-};
-
-const TYPE_LABEL: Record<PaymentType, string> = {
-  deposit: '订金',
-  balance: '尾款',
-  full: '全款',
-};
-
 function money(v?: number, c = 'USD') {
   return v == null ? '-' : `${c} ${v.toLocaleString('en-US')}`;
-}
-
-type PageKind = 'requests' | 'approvals' | 'records';
-
-function pageKind(pathname: string): PageKind {
-  if (pathname.includes('/approvals')) return 'approvals';
-  if (pathname.includes('/payment-requests')) return 'requests';
-  return 'records';
-}
-
-function titleFromKind(kind: PageKind) {
-  if (kind === 'approvals') return '财务审批';
-  if (kind === 'requests') return '付款申请';
-  return '付款记录';
-}
-
-function subtitleFromKind(kind: PageKind) {
-  if (kind === 'approvals') return '审运营提交的付款 · 通过后可标记已付';
-  if (kind === 'requests') return '运营对已确认合作发起付款';
-  return '已付与历史记录';
 }
 
 const emptyFilters = {
@@ -87,108 +52,46 @@ export default function PaymentsPage() {
   const me = ROLE_CURRENT_USER[role];
   const location = useLocation();
   const kind = pageKind(location.pathname);
-  const { campaigns, cooperations, payments, creators } = useMockStore();
-  const [statusFilter, setStatusFilter] = useState<'all' | PaymentStatus>(
-    kind === 'approvals' ? 'pending' : kind === 'records' ? 'paid' : 'all',
-  );
+  const view = PAYMENT_VIEWS[kind];
+  const { campaigns, payments } = useMockStore();
+  const [statusFilter, setStatusFilter] = useState<PaymentStatusFilter>(view.defaultStatus);
   const [filters, setFilters] = useState(emptyFilters);
   const [applyOpen, setApplyOpen] = useState(false);
-  const [form] = Form.useForm();
+  const requestedCoopId = new URLSearchParams(location.search).get('coop');
 
   const showOperatorFilter = role !== 'operator';
-  const canApply =
-    kind === 'requests' &&
-    ['operator', 'owner', 'business', 'executive', 'architecture'].includes(role);
+  const canApply = kind === 'requests' && canApplyPayment(role);
   const canReview = kind === 'approvals' && canReviewPayment(role);
 
   useEffect(() => {
-    if (kind === 'approvals' && !canRoleSeeModule(role, '/finance/approvals')) {
-      history.replace(
-        canRoleSeeModule(role, '/finance/payment-requests')
-          ? '/finance/payment-requests'
-          : '/finance/payments',
-      );
+    if (!canRoleSeeModule(role, view.path)) {
+      history.replace(defaultFinancePathForRole(role));
       return;
     }
-    if (kind === 'requests' && !canRoleSeeModule(role, '/finance/payment-requests')) {
-      history.replace(
-        canRoleSeeModule(role, '/finance/approvals')
-          ? '/finance/approvals'
-          : '/finance/payments',
-      );
-      return;
-    }
-
-    setStatusFilter(kind === 'approvals' ? 'pending' : kind === 'records' ? 'paid' : 'all');
+    setStatusFilter(view.defaultStatus);
     setFilters(emptyFilters);
+    setApplyOpen(false);
+  }, [role, view]);
 
-    const params = new URLSearchParams(location.search);
-    const coopId = params.get('coop');
-    if (coopId && kind === 'requests') {
-      const coop = cooperations.find((c) => c.id === coopId);
-      if (coop) {
-        form.setFieldsValue({
-          cooperationId: coop.id,
-          paymentType: coop.paymentMode === 'full' ? 'full' : 'deposit',
-          amount: paymentRemain(coop, payments) || undefined,
-          payoutMethod: creators.find((c) => c.id === coop.creatorId)?.payoutMethod || 'PayPal',
-          internalPayer: '美国财务',
-          payoutAccount: creators.find((c) => c.id === coop.creatorId)?.payoutAccount,
-        });
-        setApplyOpen(true);
-      }
-    }
-  }, [location.pathname, location.search, role, kind]);
+  const closeApplication = useCallback(() => {
+    setApplyOpen(false);
+    if (requestedCoopId) history.replace(view.path);
+  }, [requestedCoopId, view]);
 
   const baseList = useMemo(
     () => paymentsForRole(payments, role, campaigns),
     [campaigns, payments, role],
   );
 
-  const enriched = useMemo(
-    () =>
-      baseList.map((p) => {
-        const camp = campaigns.find((c) => c.id === p.campaignId);
-        return {
-          ...p,
-          campaignName: camp?.name || p.campaignId,
-          brand: camp?.clientBrand || '',
-        };
-      }),
+  const { rows, campaignOptions, brandOptions, operatorOptions, creatorOptions } = useMemo(
+    () => buildCampaignRecordList(baseList, campaigns),
     [baseList, campaigns],
   );
-
-  const campaignOptions = useMemo(() => {
-    const ids = new Set(enriched.map((r) => r.campaignId));
-    return campaigns
-      .filter((c) => ids.has(c.id))
-      .map((c) => ({ value: c.id, label: c.name }));
-  }, [enriched, campaigns]);
-
-  const brandOptions = useMemo(() => {
-    const set = new Set(enriched.map((r) => r.brand).filter(Boolean));
-    return Array.from(set).map((b) => ({ value: b, label: b }));
-  }, [enriched]);
-
-  const operatorOptions = useMemo(() => {
-    const set = new Set(enriched.map((r) => r.operator).filter(Boolean));
-    return Array.from(set).map((o) => ({ value: o, label: o }));
-  }, [enriched]);
-
-  const creatorOptions = useMemo(() => {
-    const map = new Map<string, string>();
-    enriched.forEach((r) => map.set(r.creatorId, r.creatorName));
-    return Array.from(map.entries()).map(([value, label]) => ({ value, label }));
-  }, [enriched]);
-
-  const payoutMethodOptions = useMemo(() => {
-    const set = new Set(enriched.map((r) => r.payoutMethod).filter(Boolean));
-    return Array.from(set).map((m) => ({ value: m, label: m }));
-  }, [enriched]);
+  const payoutMethodOptions = useMemo(() => textOptions(rows.map((r) => r.payoutMethod)), [rows]);
 
   const filteredList = useMemo(() => {
     const kw = filters.keyword.trim().toLowerCase();
-    return enriched.filter((r) => {
+    return rows.filter((r) => {
       if (statusFilter !== 'all' && r.status !== statusFilter) return false;
       if (filters.campaignId !== 'all' && r.campaignId !== filters.campaignId) return false;
       if (filters.brand !== 'all' && r.brand !== filters.brand) return false;
@@ -203,39 +106,7 @@ export default function PaymentsPage() {
       }
       return true;
     });
-  }, [enriched, filters, statusFilter]);
-
-  const myCoops = useMemo(() => {
-    if (['finance', 'executive', 'architecture'].includes(role)) return cooperations;
-    return cooperations.filter((c) => c.operator === me);
-  }, [cooperations, me, role]);
-
-  const submitApply = async () => {
-    const v = await form.validateFields();
-    const coop = cooperations.find((c) => c.id === v.cooperationId);
-    if (!coop) return message.error('请选择合作');
-    const rem = paymentRemain(coop, payments);
-    if (v.amount <= 0 || v.amount > rem) return message.error(`金额须在 0 ~ ${rem} 之间`);
-    addPayment({
-      cooperationId: coop.id,
-      campaignId: coop.campaignId,
-      creatorId: coop.creatorId,
-      creatorName: coop.creatorName,
-      operator: coop.operator,
-      paymentType: v.paymentType,
-      amount: Number(v.amount),
-      currency: coop.currency,
-      clientQuote: coop.clientQuote,
-      payoutMethod: v.payoutMethod,
-      internalPayer: v.internalPayer,
-      payoutAccount: v.payoutAccount || '',
-      status: 'pending',
-    });
-    message.success('付款申请已提交');
-    setApplyOpen(false);
-    form.resetFields();
-    history.replace('/finance/payment-requests');
-  };
+  }, [rows, filters, statusFilter]);
 
   const review = (row: PrototypePayment, status: PaymentStatus) => {
     if (row.operator === me && role === 'operator') {
@@ -245,35 +116,10 @@ export default function PaymentsPage() {
     message.success('已更新状态');
   };
 
-  const statusOptions =
-    kind === 'approvals'
-      ? [
-          { label: '全部', value: 'all' },
-          { label: '待审核', value: 'pending' },
-          { label: '已通过', value: 'approved' },
-          { label: '已付款', value: 'paid' },
-          { label: '驳回', value: 'rejected' },
-          { label: '待补充', value: 'need_info' },
-        ]
-      : kind === 'records'
-        ? [
-            { label: '已付款', value: 'paid' },
-            { label: '全部', value: 'all' },
-            { label: '已通过待付', value: 'approved' },
-          ]
-        : [
-            { label: '全部', value: 'all' },
-            { label: '待审核', value: 'pending' },
-            { label: '已通过', value: 'approved' },
-            { label: '已付款', value: 'paid' },
-            { label: '驳回', value: 'rejected' },
-            { label: '待补充', value: 'need_info' },
-          ];
-
   return (
     <PageContainer
-      title={titleFromKind(kind)}
-      subTitle={subtitleFromKind(kind)}
+      title={view.title}
+      subTitle={view.subtitle}
       extra={
         canApply ? (
           <Button type="primary" onClick={() => setApplyOpen(true)}>
@@ -286,7 +132,7 @@ export default function PaymentsPage() {
         style={{ marginBottom: 12 }}
         value={statusFilter}
         onChange={(v) => setStatusFilter(v as typeof statusFilter)}
-        options={statusOptions}
+        options={view.statusOptions}
       />
 
       <div className={styles.filterBar}>
@@ -329,9 +175,7 @@ export default function PaymentsPage() {
           onChange={(v) => setFilters((f) => ({ ...f, paymentType: v }))}
           options={[
             { value: 'all', label: '全部类型' },
-            { value: 'deposit', label: '订金' },
-            { value: 'balance', label: '尾款' },
-            { value: 'full', label: '全款' },
+            ...PAYMENT_TYPE_OPTIONS,
           ]}
         />
         <Select
@@ -422,66 +266,15 @@ export default function PaymentsPage() {
         ]}
       />
 
-      <Drawer
-        title="发起付款申请"
-        open={applyOpen}
-        onClose={() => setApplyOpen(false)}
-        width={480}
-        extra={
-          <Space>
-            <Button onClick={() => setApplyOpen(false)}>取消</Button>
-            <Button type="primary" onClick={submitApply}>
-              提交
-            </Button>
-          </Space>
-        }
-      >
-        <Form form={form} layout="vertical">
-          <Form.Item name="cooperationId" label="合作" rules={[{ required: true }]}>
-            <Select
-              options={myCoops.map((c) => ({
-                value: c.id,
-                label: `${c.id} · ${c.creatorName} · 剩余 ${paymentRemain(c, payments)}`,
-              }))}
-              onChange={(id) => {
-                const coop = cooperations.find((c) => c.id === id);
-                if (!coop) return;
-                const cr = creators.find((c) => c.id === coop.creatorId);
-                form.setFieldsValue({
-                  amount: paymentRemain(coop, payments),
-                  payoutMethod: cr?.payoutMethod || 'PayPal',
-                  payoutAccount: cr?.payoutAccount,
-                });
-              }}
-            />
-          </Form.Item>
-          <Form.Item name="paymentType" label="付款类型" rules={[{ required: true }]}>
-            <Select
-              options={[
-                { value: 'deposit', label: '订金' },
-                { value: 'balance', label: '尾款' },
-                { value: 'full', label: '全款' },
-              ]}
-            />
-          </Form.Item>
-          <Form.Item name="amount" label="本次金额" rules={[{ required: true }]}>
-            <InputNumber min={0} style={{ width: '100%' }} addonBefore="$" />
-          </Form.Item>
-          <Form.Item name="payoutMethod" label="付款渠道" rules={[{ required: true }]}>
-            <Select
-              options={['PayPal', 'Wise', 'Bank', 'Zelle'].map((v) => ({ value: v, label: v }))}
-            />
-          </Form.Item>
-          <Form.Item name="internalPayer" label="内部付款人" rules={[{ required: true }]}>
-            <Select
-              options={['美国财务', '冰姐', '国内财务'].map((v) => ({ value: v, label: v }))}
-            />
-          </Form.Item>
-          <Form.Item name="payoutAccount" label="达人收款账号" rules={[{ required: true }]}>
-            <Input />
-          </Form.Item>
-        </Form>
-      </Drawer>
+      {canApply && (
+        <PaymentApplicationDrawer
+          role={role}
+          open={applyOpen || Boolean(requestedCoopId)}
+          requestedCoopId={requestedCoopId}
+          onClose={closeApplication}
+          key={role + ':' + (requestedCoopId ?? '')}
+        />
+      )}
     </PageContainer>
   );
 }

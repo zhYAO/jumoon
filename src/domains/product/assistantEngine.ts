@@ -4,7 +4,7 @@ import {
   pctText,
   type CampaignLedger,
 } from './campaignLedger';
-import { coopPayProgress } from './coopPayProgress';
+import { COOP_PAY_PROGRESS_LABEL, indexCooperationPayments } from './coopPayProgress';
 import type {
   PrototypeCampaign,
   PrototypeCooperation,
@@ -153,7 +153,8 @@ function opsToday(
 ): AssistantAnswer {
   const active = ledgers.filter((l) => l.campaign.status === 'active');
   const gap = active.filter((l) => l.creatorGap > 0).length;
-  const payable = coops.filter((c) => coopPayProgress(c, pays) !== 'settled').length;
+  const paymentSummary = indexCooperationPayments(pays);
+  const payable = coops.filter((coop) => paymentSummary(coop).remain > 0).length;
   const myPending = pays.filter((p) => p.status === 'pending').length;
   return {
     title: '今日待办摘要',
@@ -214,7 +215,8 @@ function opsPayable(
   campaigns: PrototypeCampaign[],
   note: string,
 ): AssistantAnswer {
-  const rows = coops.filter((c) => coopPayProgress(c, pays) !== 'settled');
+  const paymentSummary = indexCooperationPayments(pays);
+  const rows = coops.filter((coop) => paymentSummary(coop).remain > 0);
   return {
     title: '可申请付款清单',
     summary: rows.length
@@ -222,8 +224,8 @@ function opsPayable(
       : '可见合作均已结清或暂无可付余额。',
     bullets: rows.slice(0, 8).map((c) => {
       const name = campaigns.find((x) => x.id === c.campaignId)?.name || c.campaignId;
-      const prog = coopPayProgress(c, pays);
-      return `${c.creatorName} · ${name} · ${prog === 'none' ? '未申请' : '部分付'} · 合作额 ${moneyText(c.creatorTotal, c.currency)}`;
+      const { payProgress } = paymentSummary(c);
+      return `${c.creatorName} · ${name} · ${COOP_PAY_PROGRESS_LABEL[payProgress]} · 合作额 ${moneyText(c.creatorTotal, c.currency)}`;
     }),
     actions: [
       { label: '合作管理', path: '/cooperations' },

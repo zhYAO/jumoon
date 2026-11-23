@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { isProductPrototypePath } from '@/domains/product/prototypeNavigation';
 import {
   collectIconByPath,
   collectMenuPaths,
@@ -34,7 +35,7 @@ describe('resolveMenuIconName', () => {
 
 describe('collectIconByPath', () => {
   it('把相对路由拼成侧栏用的绝对路径', () => {
-    const map = collectIconByPath([
+    const menus = [
       {
         id: 1,
         parentId: 0,
@@ -45,7 +46,8 @@ describe('collectIconByPath', () => {
           { id: 2, parentId: 1, name: '角色管理', path: 'role', icon: 'role' },
         ],
       },
-    ]);
+    ];
+    const map = collectIconByPath(menus);
     expect(map.get('/system')).toBe('settings');
     expect(map.get('/system/role')).toBe('role');
   });
@@ -110,18 +112,21 @@ describe('filterLayoutMenusByBackend', () => {
     const visible = filterLayoutMenusByBackend(
       [
         { path: '/home', name: '工作台' },
-        {
-          path: '/project',
-          name: '项目管理',
-          children: [
-            { path: '/project/campaigns', name: 'Campaign 计划' },
-            { path: '/project/cooperations', name: '合作管理' },
-          ],
-        },
+        { path: '/campaigns', name: '项目管理' },
+        { path: '/cooperations', name: '合作管理' },
+        { path: '/project/campaigns', name: '旧项目路径' },
       ],
       [],
+      isProductPrototypePath,
     );
-    expect(visible.map((n) => n.path)).toEqual(['/home', '/project']);
-    expect(visible[1].children?.map((n) => n.path)).toEqual(['/project/campaigns', '/project/cooperations']);
+    expect(visible.map((n) => n.path)).toEqual(['/home', '/campaigns', '/cooperations']);
+  });
+
+  it('未指定前端保留规则时按后端菜单过滤业务路径', () => {
+    const visible = filterLayoutMenusByBackend(
+      [{ path: '/home' }, { path: '/campaigns' }, { path: '/cooperations' }],
+      [{ path: '/cooperations' }],
+    );
+    expect(visible.map((n) => n.path)).toEqual(['/home', '/cooperations']);
   });
 });

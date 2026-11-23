@@ -155,8 +155,8 @@ export default function SystemOperateLogPage() {
   const fm: Fm = (id, values) => formatMessage({ id }, values);
   const actionRef = useRef<ActionType>();
 
-  const request = useProTableRequest<SysOperateLog>(
-    (query) => operateLogService.page(query),
+  const request = useProTableRequest(
+    operateLogService.page,
     {
       mapParams: (params) => {
         let beginTime = params.beginTime as string | undefined;

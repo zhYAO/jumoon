@@ -8,7 +8,7 @@ import { authService } from '@/domains/iam/services/authService';
 import type { PermissionInfo } from '@/domains/iam/types';
 import { LanguageSwitcher } from '@/i18n/LanguageSwitcher';
 import { PrototypeRoleSwitcher } from '@/domains/product/components/PrototypeRoleSwitcher';
-import { filterMenusForPrototypeRole } from '@/domains/product/prototypeNavigation';
+import { filterMenusForPrototypeRole, isProductPrototypePath } from '@/domains/product/prototypeNavigation';
 import {
   clearPrototypeSession,
   isPrototypeSession,
@@ -99,7 +99,11 @@ export const layout: RunTimeLayoutConfig = ({ initialState }) => {
     },
     menuDataRender: (menuData) =>
       filterMenusForPrototypeRole(
-        applyLayoutMenuIcons(menuData, initialState?.permissionInfo?.menus || []),
+        applyLayoutMenuIcons(
+          menuData,
+          initialState?.permissionInfo?.menus,
+          isProductPrototypePath,
+        ),
       ),
     menuItemRender: (item, defaultDom) => {
       const nested =

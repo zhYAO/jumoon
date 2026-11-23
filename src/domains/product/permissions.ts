@@ -17,11 +17,31 @@ export function canCreateCreator(role: PrototypeRole) {
 }
 
 export function canCreateCooperation(role: PrototypeRole) {
-  return ['architecture', 'owner', 'operator', 'executive'].includes(role);
+  return ['architecture', 'business', 'owner', 'operator', 'executive'].includes(role);
 }
 
 export function canApplyPayment(role: PrototypeRole) {
   return ['architecture', 'owner', 'operator', 'executive'].includes(role);
+}
+
+function recordsForOwner<T extends { campaignId: string; operator: string }>(
+  records: T[],
+  campaigns: PrototypeCampaign[],
+) {
+  const me = ROLE_CURRENT_USER.owner;
+  const ownedProjects = new Set(campaigns.filter((c) => c.projectOwner === me).map((c) => c.id));
+  return records.filter((row) => row.operator === me || ownedProjects.has(row.campaignId));
+}
+
+export function cooperationsForPaymentApplication(
+  cooperations: PrototypeCooperation[],
+  campaigns: PrototypeCampaign[],
+  role: PrototypeRole,
+) {
+  if (!canApplyPayment(role)) return [];
+  if (role === 'owner') return recordsForOwner(cooperations, campaigns);
+  if (role === 'operator') return cooperations.filter((coop) => coop.operator === ROLE_CURRENT_USER[role]);
+  return cooperations;
 }
 
 export function canManageCampaign(role: PrototypeRole, campaign?: PrototypeCampaign) {
@@ -73,6 +93,7 @@ export function cooperationsForRole(
   role: PrototypeRole,
   payments: PrototypePayment[],
 ) {
+  if (role === 'owner') return recordsForOwner(cooperations, campaigns);
   const visibleCampaignIds = new Set(
     campaignsForRole(campaigns, role, cooperations, payments).map((c) => c.id),
   );
@@ -96,13 +117,7 @@ export function paymentsForRole(
     const me = ROLE_CURRENT_USER[role];
     return payments.filter((p) => p.operator === me);
   }
-  if (role === 'owner') {
-    const me = ROLE_CURRENT_USER[role];
-    const campaignIds = new Set(
-      campaigns.filter((c) => c.projectOwner === me).map((c) => c.id),
-    );
-    return payments.filter((p) => campaignIds.has(p.campaignId));
-  }
+  if (role === 'owner') return recordsForOwner(payments, campaigns);
   if (role === 'business') {
     const me = ROLE_CURRENT_USER[role];
     const campaignIds = new Set(
