@@ -1,0 +1,83 @@
+.triggerRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.trigger {
+  flex: 1;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.selected {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.placeholder {
+  color: rgba(0, 0, 0, 0.25);
+}
+
+.clear {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+  line-height: 1;
+}
+
+.clear:hover {
+  color: rgba(0, 0, 0, 0.45);
+}
+
+.panel {
+  width: 320px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 6px;
+  max-height: 240px;
+  overflow: auto;
+  margin-top: 8px;
+}
+
+.cell {
+  height: 32px;
+  border: 1px solid #f0f0f0;
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: rgba(0, 0, 0, 0.75);
+  padding: 0;
+}
+
+.cell:hover {
+  border-color: #9584b7;
+  color: #9584b7;
+}
+
+.active {
+  border-color: #9584b7;
+  color: #9584b7;
+  background: #f6f3fb;
+}
+
+.empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  color: rgba(0, 0, 0, 0.45);
+  padding: 16px 0;
+  font-size: 12px;
+}

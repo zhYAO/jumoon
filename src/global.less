@@ -1,0 +1,104 @@
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  color: #253047;
+  background: #f4f6f8;
+  font-family: 'Avenir Next', 'Segoe UI', 'PingFang SC', 'Helvetica Neue', sans-serif;
+}
+
+.ant-pro-layout .ant-pro-sider-logo h1 {
+  letter-spacing: 0;
+}
+
+.ant-pro-layout .ant-layout-content {
+  background: #f4f6f8;
+}
+
+.ant-pro-layout .ant-pro-page-container-children-container {
+  padding-block-end: 36px;
+}
+
+/* 侧栏收起时只保留头像，隐藏用户名，避免竖排挤乱 */
+.ant-pro-sider-collapsed .ant-pro-layout-avatar-name,
+.ant-layout-sider-collapsed .ant-pro-layout-avatar-name,
+.ant-pro-sider-collapsed .umi-plugin-layout-name,
+.ant-layout-sider-collapsed .umi-plugin-layout-name {
+  display: none !important;
+}
+
+.jumoon-sider-tools {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  justify-content: center;
+  padding: 12px 16px 16px;
+}
+
+.jumoon-sider-tools.is-collapsed {
+  padding: 8px 4px 12px;
+}
+
+.jumoon-sider-tools.is-collapsed .jumoon-language-switcher {
+  flex-direction: column;
+}
+
+.jumoon-sider-tools.is-collapsed .jumoon-language-switcher button {
+  min-width: 36px;
+  padding: 0 4px;
+}
+
+.jumoon-language-switcher {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  flex-shrink: 0;
+  pointer-events: auto;
+  padding: 2px;
+  border-radius: 8px;
+  background: #fff;
+  border: 1px solid rgba(27, 33, 68, 0.16);
+  box-shadow: 0 1px 2px rgba(27, 33, 68, 0.06);
+}
+
+.jumoon-language-switcher button {
+  min-width: 44px;
+  height: 26px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #1b2144;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 26px;
+  cursor: pointer;
+}
+
+.jumoon-language-switcher button.is-active {
+  background: #9584b7;
+  color: #fff;
+}
+
+.jumoon-header-user {
+  pointer-events: auto;
+}
+
+/* ProLayout 二级菜单默认不渲染图标，这里补上后对齐一级菜单的间距 */
+.jumoon-sub-menu-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.jumoon-sub-menu-icon {
+  display: inline-flex;
+  align-items: center;
+  font-size: 14px;
+  line-height: 1;
+}

@@ -1,0 +1,265 @@
+@brand-navy: #1b2144;
+@brand-lavender: #9584b7;
+@brand-gold: #e5c369;
+@panel-bg: #f3f0f8;
+@input-bg: #ebe6f4;
+@card-bg: rgba(255, 255, 255, 0.72);
+
+.page {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+  background: @panel-bg;
+}
+
+.brand {
+  position: relative;
+  flex: 1.05;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: @brand-navy;
+  overflow: hidden;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+      circle at 50% 42%,
+      fade(@brand-lavender, 18%) 0%,
+      transparent 58%
+    );
+    pointer-events: none;
+  }
+}
+
+.brandLogo {
+  position: relative;
+  z-index: 1;
+  width: min(68%, 400px);
+  height: auto;
+  object-fit: contain;
+  user-select: none;
+  pointer-events: none;
+  filter: drop-shadow(0 18px 40px rgba(0, 0, 0, 0.28));
+}
+
+.panel {
+  position: relative;
+  flex: 0.95;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px 72px;
+  background:
+    radial-gradient(circle at 80% 18%, fade(@brand-gold, 14%) 0%, transparent 36%),
+    linear-gradient(165deg, #f7f5fb 0%, @panel-bg 48%, #ebe7f3 100%);
+}
+
+.formWrap {
+  width: 100%;
+  max-width: 380px;
+  padding: 36px 32px 28px;
+  background: @card-bg;
+  border: 1px solid rgba(149, 132, 183, 0.18);
+  border-radius: 18px;
+  backdrop-filter: blur(10px);
+  box-shadow:
+    0 18px 40px rgba(27, 33, 68, 0.08),
+    0 1px 0 rgba(255, 255, 255, 0.7) inset;
+}
+
+.brandRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 28px;
+}
+
+.brandText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.lang {
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+
+.mark {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  object-position: center 28%;
+  border-radius: 12px;
+  box-shadow: 0 6px 16px rgba(27, 33, 68, 0.2);
+}
+
+.brandText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.brandName {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: @brand-navy;
+  line-height: 1.1;
+}
+
+.brandSub {
+  font-size: 12px;
+  color: fade(@brand-navy, 55%);
+  letter-spacing: 0.04em;
+}
+
+.form {
+  :global {
+    .ant-form-item {
+      margin-bottom: 16px;
+    }
+
+    .ant-input-affix-wrapper {
+      padding: 11px 14px;
+      background: @input-bg !important;
+      border: 1px solid transparent !important;
+      border-radius: 10px !important;
+      box-shadow: none !important;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    }
+
+    .ant-input-affix-wrapper:hover {
+      background: darken(@input-bg, 2%) !important;
+    }
+
+    .ant-input-affix-wrapper-focused,
+    .ant-input-affix-wrapper:focus-within {
+      background: #fff !important;
+      border-color: fade(@brand-lavender, 55%) !important;
+      box-shadow: 0 0 0 3px fade(@brand-lavender, 18%) !important;
+    }
+
+    .ant-input-affix-wrapper > input.ant-input,
+    .ant-input {
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+    }
+
+    .ant-input::placeholder {
+      color: #9a91b0;
+    }
+
+    .ant-input-password-icon {
+      color: #8f86a5;
+    }
+  }
+}
+
+.icon {
+  color: @brand-lavender;
+  font-size: 16px;
+}
+
+.submitItem {
+  margin-top: 10px;
+  margin-bottom: 0 !important;
+}
+
+.submit {
+  height: 46px !important;
+  border: none !important;
+  border-radius: 10px !important;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  background: linear-gradient(135deg, lighten(@brand-lavender, 4%) 0%, @brand-lavender 55%, darken(@brand-lavender, 6%) 100%) !important;
+  box-shadow: 0 10px 22px fade(@brand-lavender, 35%);
+
+  &:hover,
+  &:focus {
+    filter: brightness(1.05);
+  }
+
+  &:active {
+    filter: brightness(0.96);
+  }
+}
+
+.prototypeButton {
+  height: 42px !important;
+  margin-top: 12px;
+  border-color: fade(@brand-navy, 20%) !important;
+  border-radius: 8px !important;
+  color: @brand-navy !important;
+  background: rgba(255, 255, 255, 0.72) !important;
+
+  &:hover,
+  &:focus {
+    border-color: @brand-lavender !important;
+    color: darken(@brand-lavender, 12%) !important;
+  }
+}
+
+.footer {
+  position: absolute;
+  left: 50%;
+  bottom: 28px;
+  transform: translateX(-50%);
+  color: fade(@brand-navy, 45%);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+}
+
+.hint {
+  margin: 0 0 20px;
+  color: fade(@brand-navy, 68%);
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.logoutLink {
+  display: block;
+  margin-top: 16px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: fade(@brand-navy, 55%);
+  font-size: 13px;
+  cursor: pointer;
+
+  &:hover {
+    color: @brand-lavender;
+  }
+}
+
+@media (max-width: 900px) {
+  .page {
+    flex-direction: column;
+  }
+
+  .brand {
+    min-height: 220px;
+    flex: none;
+  }
+
+  .brandLogo {
+    width: min(48%, 220px);
+  }
+
+  .panel {
+    flex: 1;
+    padding-bottom: 96px;
+  }
+
+  .formWrap {
+    padding: 28px 22px 22px;
+  }
+}

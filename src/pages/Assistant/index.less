@@ -1,0 +1,152 @@
+.page {
+  :global(.ant-pro-page-container-children-container) {
+    padding-bottom: 32px;
+  }
+}
+
+.eyebrow {
+  display: block;
+  color: #667085;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.hero {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  padding: 20px 22px;
+  border: 1px solid #e4e7ec;
+  border-left: 3px solid #3478c9;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #f7fafc 0%, #eef5fb 100%);
+}
+
+.heroIcon {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: #3478c9;
+  color: #fff;
+  font-size: 22px;
+}
+
+.heroBody {
+  max-width: 720px;
+  margin-bottom: 10px !important;
+  color: #475467;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.prompts,
+.answerPanel {
+  padding: 18px 20px;
+  border: 1px solid #e4e7ec;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.promptList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.promptItem {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  width: 100%;
+  padding: 12px 12px;
+  border: 1px solid #e4e7ec;
+  border-radius: 8px;
+  background: #fafbfc;
+  text-align: left;
+  cursor: pointer;
+}
+
+.promptItem :global(.anticon) {
+  margin-top: 2px;
+  color: #3478c9;
+}
+
+.promptItem strong {
+  display: block;
+  color: #1f2937;
+  font-size: 14px;
+}
+
+.promptItem small {
+  display: block;
+  margin-top: 2px;
+  color: #98a2b3;
+  font-size: 12px;
+}
+
+.promptItem:hover {
+  border-color: #b6d0ef;
+  background: #f2f7fd;
+}
+
+.promptActive {
+  border-color: #3478c9;
+  background: #f2f7fd;
+  box-shadow: inset 0 0 0 1px #3478c9;
+}
+
+.answerPanel {
+  min-height: 360px;
+}
+
+.summary {
+  margin-bottom: 12px !important;
+  color: #344054;
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.bullets {
+  margin: 0 0 16px;
+  padding-left: 18px;
+  color: #475467;
+  line-height: 1.6;
+}
+
+.bullets li + li {
+  margin-top: 6px;
+}
+
+.actions {
+  margin-bottom: 16px;
+}
+
+.note {
+  display: block;
+  padding-top: 12px;
+  border-top: 1px solid #eef1f5;
+  font-size: 12px;
+}
+
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .hero {
+    flex-direction: column;
+  }
+}

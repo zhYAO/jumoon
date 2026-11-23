@@ -1,0 +1,10 @@
+node_modules
+dist
+.umi
+src/.umi
+src/.umi-production
+src/.umi-test
+.git
+*.log
+.DS_Store
+.env.local
