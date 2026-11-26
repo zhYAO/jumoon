@@ -2,10 +2,8 @@ import { PageContainer } from '@ant-design/pro-components';
 import { history } from '@umijs/max';
 import { Button, Col, Row, Statistic, Table, Typography } from 'antd';
 import { useMemo, type CSSProperties } from 'react';
-import {
-  baseChartOption,
-  DemoChart,
-} from '@/domains/product/charts/DemoChart';
+import { DemoChart } from '@/domains/product/charts/DemoChart';
+import { baseChartOption } from '@/domains/product/charts/chartOptions';
 import { CHART_COLORS } from '@/domains/product/mockTypes';
 import { useMockStore } from '@/domains/product/mockStore';
 import {

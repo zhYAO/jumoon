@@ -1,43 +1,48 @@
-import type { EChartsOption } from 'echarts';
-import ReactECharts from 'echarts-for-react';
-import { CHART_COLORS } from '../mockTypes';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import type { DashboardChartOption } from './chartOptions';
 
-export const chartPalette = [
-  CHART_COLORS.primary,
-  CHART_COLORS.success,
-  CHART_COLORS.warning,
-  CHART_COLORS.muted,
-  CHART_COLORS.danger,
-];
-
-export function moneyTooltip(value: number, currency = 'USD') {
-  return `${currency} ${Number(value || 0).toLocaleString('en-US')}`;
+function ChartUnavailable() {
+  return <span role="status">图表暂时无法加载</span>;
 }
 
-export function baseChartOption(partial: EChartsOption): EChartsOption {
-  return {
-    color: chartPalette,
-    textStyle: { color: '#475467', fontFamily: 'inherit' },
-    grid: { left: 48, right: 16, top: 32, bottom: 32, containLabel: true },
-    tooltip: { trigger: 'axis' },
-    ...partial,
-  };
-}
+// A failed chunk must not take down the surrounding metrics and actions.
+const ChartRenderer = lazy(() =>
+  import('./ChartRenderer').catch(() => ({ default: ChartUnavailable })),
+);
 
 type ChartProps = {
-  option: EChartsOption;
+  option: DashboardChartOption;
   height?: number;
-  empty?: boolean;
 };
 
-export function DemoChart({ option, height = 260, empty }: ChartProps) {
-  if (empty) return null;
+export function DemoChart({ option, height = 260 }: ChartProps) {
+  const container = useRef<HTMLDivElement>(null);
+  const [showChart, setShowChart] = useState(false);
+
+  useEffect(() => {
+    const element = container.current;
+    if (!element || typeof IntersectionObserver === 'undefined') {
+      setShowChart(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        observer.disconnect();
+        setShowChart(true);
+      }
+    });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <ReactECharts
-      option={option}
-      style={{ height, width: '100%' }}
-      opts={{ renderer: 'canvas' }}
-      notMerge
-    />
+    <div ref={container} style={{ height }}>
+      {showChart && (
+        <Suspense fallback={<span role="status">图表加载中…</span>}>
+          <ChartRenderer option={option} />
+        </Suspense>
+      )}
+    </div>
   );
 }

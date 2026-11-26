@@ -7,13 +7,9 @@ import {
 import { PageContainer } from '@ant-design/pro-components';
 import { history } from '@umijs/max';
 import { Button, Col, Row, Space, Statistic, Table, Tag, Typography } from 'antd';
-import type { EChartsOption } from 'echarts';
 import { useMemo } from 'react';
-import {
-  baseChartOption,
-  DemoChart,
-  moneyTooltip,
-} from '@/domains/product/charts/DemoChart';
+import { DemoChart } from '@/domains/product/charts/DemoChart';
+import { baseChartOption, moneyTooltip } from '@/domains/product/charts/chartOptions';
 import { CHART_COLORS, ROLE_CURRENT_USER } from '@/domains/product/mockTypes';
 import { useMockStore } from '@/domains/product/mockStore';
 import {
@@ -195,7 +191,7 @@ export default function HomePage() {
           itemStyle: { color: CHART_COLORS.warning },
         },
       ],
-    } as EChartsOption);
+    });
   }, [campaigns, myCampaigns, myCoops, myPays]);
 
   const contribBar = useMemo(() => {
